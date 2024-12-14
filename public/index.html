@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dealer & Chassis Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        form {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        label {
+            margin: 10px 0 5px;
+        }
+
+        input {
+            padding: 8px;
+            margin-bottom: 10px;
+            width: 300px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .complete-button, .remove-button {
+            padding: 5px 10px;
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .complete-button:hover, .remove-button:hover {
+            background-color: #e68a00;
+        }
+
+        .completed {
+            background-color: #d4edda;
+        }
+
+        .remove-button {
+            background-color: #f44336;
+        }
+
+        .remove-button:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dealer & Chassis Management</h1>
+    <form id="entryForm">
+        <label for="dealerName">Dealer Name:</label>
+        <input type="text" id="dealerName" required>
+
+        <label for="chassisNumber">Chassis Number:</label>
+        <input type="text" id="chassisNumber" required>
+
+        <button type="submit">Add Entry</button>
+    </form>
+
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>Dealer Name</th>
+                <th>Chassis Number</th>
+                <th>Status</th>
+                <th>Remove</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script type="module">
+        // Firebase 配置
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+        import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBcczqGj5X1_w9aCX1lOK4-kgz49Oi03Bg",
+            authDomain: "scheduling-dd672.firebaseapp.com",
+            databaseURL: "https://scheduling-dd672-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "scheduling-dd672",
+            storageBucket: "scheduling-dd672.appspot.com",
+            messagingSenderId: "432092773012",
+            appId: "1:432092773012:web:ebc7203ea570b0da2ad281"
+        };
+
+        // 初始化 Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const form = document.getElementById('entryForm');
+        const dealerNameInput = document.getElementById('dealerName');
+        const chassisNumberInput = document.getElementById('chassisNumber');
+        const dataTable = document.getElementById('dataTable').querySelector('tbody');
+
+        // 从 Firebase 获取数据
+        const entriesRef = ref(db, 'entries');
+        onValue(entriesRef, (snapshot) => {
+            const data = snapshot.val();
+            renderTable(data);
+        });
+
+        // 渲染表格
+        function renderTable(data) {
+            dataTable.innerHTML = '';
+            if (data) {
+                Object.keys(data).forEach((key) => {
+                    const row = data[key];
+                    const tr = document.createElement('tr');
+
+                    if (row.completed) {
+                        tr.classList.add('completed');
+                    }
+
+                    tr.innerHTML = `
+                        <td>${row.dealerName}</td>
+                        <td>${row.chassisNumber}</td>
+                        <td>
+                            <button class="complete-button" onclick="markComplete('${key}')">
+                                ${row.completed ? 'Completed' : 'Mark as Complete'}
+                            </button>
+                        </td>
+                        <td>
+                            <button class="remove-button" onclick="removeEntry('${key}')">Remove</button>
+                        </td>
+                    `;
+                    dataTable.appendChild(tr);
+                });
+            }
+        }
+
+        // 新增数据到 Firebase
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const newEntry = {
+                dealerName: dealerNameInput.value,
+                chassisNumber: chassisNumberInput.value,
+                completed: false,
+            };
+
+            push(entriesRef, newEntry);
+
+            dealerNameInput.value = '';
+            chassisNumberInput.value = '';
+        });
+
+        // 标记完成
+        window.markComplete = function (key) {
+            const entryRef = ref(db, `entries/${key}`);
+            update(entryRef, { completed: true });
+        };
+
+        // 删除记录
+        window.removeEntry = function (key) {
+            const entryRef = ref(db, `entries/${key}`);
+            remove(entryRef);
+        };
+    </script>
+</body>
+</html>

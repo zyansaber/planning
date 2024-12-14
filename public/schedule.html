@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Page</title>
+    <style>
+        /* 样式 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            max-width: 200px; /* 限制最大宽度 */
+            overflow: hidden;
+            text-overflow: ellipsis; /* 防止内容超出 */
+        }
+        tbody tr {
+            cursor: move;
+        }
+
+        /* 样式：页面选择框 */
+        #pageSelect {
+            margin: 20px 0;
+        }
+
+        /* 样式：表格宽度调整 */
+        table {
+            width: 90%; /* 调整为适应屏幕宽度 */
+            margin: 0 auto; /* 居中 */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 返回主页 -->
+    <a href="index.html">Back to Home</a>
+
+    <h2>Upload Excel File</h2>
+
+    <!-- 页面选择框 -->
+    <div id="pageSelect">
+        <label for="pageOption">Select Page:</label>
+        <select id="pageOption">
+            <option value="Schedule">Schedule</option>
+            <option value="Dashboard">Dashboard</option>
+        </select>
+    </div>
+
+    <input type="file" id="excelFile" accept=".xlsx, .xls" />
+    <div id="tableContainer"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+
+    <script>
+        document.getElementById('excelFile').addEventListener('change', handleFileUpload, false);
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const data = e.target.result;
+                    const workbook = XLSX.read(data, { type: 'binary' });
+                    const sheetName = workbook.SheetNames[0]; // 默认使用第一个sheet
+                    const sheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(sheet);
+                    displayTable(jsonData);
+                };
+                reader.readAsBinaryString(file);
+            }
+        }
+
+        function displayTable(data) {
+            const tableContainer = document.getElementById('tableContainer');
+            let tableHtml = '<table id="dataTable"><thead><tr>';
+
+            // Add headers
+            Object.keys(data[0]).forEach(key => {
+                tableHtml += `<th>${key}</th>`;
+            });
+            tableHtml += '</tr></thead><tbody>';
+
+            // Add rows
+            data.forEach((row, index) => {
+                tableHtml += '<tr>';
+                Object.values(row).forEach(value => {
+                    tableHtml += `<td>${value}</td>`;
+                });
+                tableHtml += '</tr>';
+            });
+            tableHtml += '</tbody></table>';
+            tableContainer.innerHTML = tableHtml;
+
+            // Enable drag and drop on the table rows
+            const table = document.getElementById('dataTable');
+            const sortable = new Sortable(table.querySelector('tbody'), {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+            });
+        }
+    </script>
+
+</body>
+</html>
