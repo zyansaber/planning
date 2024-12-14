@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "scheduling-dd672"
-  }
+    "default": "scheduling-dd672",
+    "staging": "scheduling-dd672"
+  },
+  "targets": {},
+  "etags": {}
 }
